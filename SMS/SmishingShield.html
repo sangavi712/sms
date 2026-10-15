@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smishing Shield - Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    :root {
+      font-family: Arial, sans-serif;
+      --muted: #333;
+    }
+
+    body {
+      background: url('C:/Users/acer/Downloads/SMS/bg_sms.jpeg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      align-items: center;
+    }
+
+    .container {
+      width: 900px;
+      max-width: 96%;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #111;
+    }
+
+    .dashboard {
+      display: flex;
+      justify-content: space-around;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .dash-card {
+      background: linear-gradient(
+        145deg,
+        rgba(255,255,255,0.85),
+        rgba(240,240,240,0.6)
+      );
+
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(20,20,50,0.15);
+      cursor: pointer;
+      text-align: center;
+      flex: 1;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .dash-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 28px rgba(20,20,50,0.25);
+    }
+
+    .dash-card h2 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+    }
+
+    .dash-card p {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .card {
+      background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.8),
+        rgba(240, 240, 240, 0.6)
+      );
+
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(20,20,50,0.15);
+      backdrop-filter: blur(8px);
+      display: none;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #d6dbe8;
+      background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.9),
+        rgba(245,245,245,0.6)
+      );
+      backdrop-filter: blur(6px);
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 12px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 0;
+      cursor: pointer;
+      background: #0066cc;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .back-btn {
+      background: #888;
+      margin-bottom: 10px;
+    }
+
+    .result {
+      margin-top: 14px;
+      padding: 12px;
+      background: rgba(241, 246, 255, 0.85);
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .file-upload {
+      border: 1px dashed rgba(214,219,232,0.6);
+      padding: 12px;
+      border-radius: 8px;
+      background: linear-gradient(
+        120deg,
+        rgba(255,255,255,0.85),
+        rgba(240,240,240,0.6)
+      );
+      backdrop-filter: blur(4px);
+    }
+
+    .label-spam {
+      color: #b00020;
+      font-weight: 700;
+    }
+
+    .label-ham {
+      color: #1a7f1a;
+      font-weight: 700;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Smishing Shield Dashboard</h1>
+
+  <!-- Dashboard Options -->
+  <div class="dashboard">
+
+    <div class="dash-card" data-target="textCard">
+      <h2>Paste SMS Text</h2>
+      <p>Check messages by pasting SMS directly.</p>
+    </div>
+
+    <div class="dash-card" data-target="screenshotCard">
+      <h2>Upload Screenshot</h2>
+      <p>Extract and check SMS from image.</p>
+    </div>
+
+    <div class="dash-card" data-target="csvCard">
+      <h2>Upload CSV</h2>
+      <p>Batch check multiple messages via CSV.</p>
+    </div>
+
+  </div>
+
+
+  <!-- Text SMS Card -->
+  <div class="card" id="textCard">
+
+    <button class="back-btn" onclick="showDashboard()">← Back</button>
+
+    <label for="sms">SMS message</label>
+
+    <textarea
+      id="sms"
+      placeholder="Example: Your bank account has been blocked. Call now 0123456789">
+    </textarea>
+
+    <div>
+      <button id="checkBtn">Check Message</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+
+    <div
+      id="resultBox"
+      class="result"
+      style="display:none">
+    </div>
+
+  </div>
+
+
+  <!-- Screenshot Card -->
+  <div class="card" id="screenshotCard">
+
+    <button class="back-btn" onclick="showDashboard()">← Back</button>
+
+    <label for="imgUpload">Upload SMS Screenshot</label>
+
+    <input
+      id="imgUpload"
+      type="file"
+      accept="image/*" />
+
+    <button
+      id="ocrBtn"
+      style="background:#8b2e5a">
+      Extract & Check
+    </button>
+
+    <div
+      id="ocrStatus"
+      class="muted">
+    </div>
+
+    <div
+      id="resultBoxImg"
+      class="result"
+      style="display:none">
+    </div>
+
+  </div>
+
+
+  <!-- CSV Card -->
+  <div class="card" id="csvCard">
+
+    <button class="back-btn" onclick="showDashboard()">← Back</button>
+
+    <div class="file-upload">
+
+      <label for="file">Upload CSV</label>
+
+      <input
+        id="file"
+        type="file"
+        accept=".csv" />
+
+      <p class="muted">
+        Upload CSV to batch-check messages.
+        Each row should include a "message" column.
+      </p>
+
+      <button
+        id="uploadBtn"
+        style="background:#2e8b57">
+        Upload & Predict
+      </button>
+
+      <div
+        id="uploadStatus"
+        class="muted">
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  /* ================================
+     Dashboard Navigation
+  ================================= */
+
+  const dashboard = document.querySelector('.dashboard');
+  const cards = document.querySelectorAll('.card');
+
+  document.querySelectorAll('.dash-card').forEach(card => {
+
+    card.addEventListener('click', () => {
+
+      const target = card.dataset.target;
+
+      dashboard.style.display = 'none';
+
+      cards.forEach(c => {
+        c.style.display = 'none';
+      });
+
+      document.getElementById(target).style.display = 'block';
+
+    });
+
+  });
+
+
+  function showDashboard() {
+
+    dashboard.style.display = 'flex';
+
+    cards.forEach(c => {
+      c.style.display = 'none';
+    });
+
+  }
+
+
+  /* ================================
+     Keyword-Based Spam Detection
+  ================================= */
+
+  function keywordBasedCheck(text) {
+
+    const keywords = [
+
+      "bank",
+      "account",
+      "blocked",
+      "password",
+      "click",
+      "verify",
+      "urgent",
+      "OTP",
+      "call now",
+      "lottery",
+      "win",
+      "winner",
+      "reward",
+      "bonus",
+      "offer",
+      "free",
+      "cash",
+      "prize",
+      "download",
+      "grab now",
+      "earn",
+      "money",
+      "lakh",
+      "withdraw",
+      "instant",
+      "play",
+      "games"
+
+    ];
+
+
+    const lower = text.toLowerCase();
+
+    const matched = keywords.filter(
+      k => lower.includes(k.toLowerCase())
+    );
+
+
+    const score = matched.length > 0 ? 0.9 : 0.1;
+
+
+    /*
+       Generate a meaningful explanation
+       instead of displaying only keywords.
+    */
+
+    let explanation;
+
+
+    if (score > 0.5) {
+
+      const matchedLower = matched.map(k => k.toLowerCase());
+
+      const bankingTerms = [
+        "bank",
+        "account",
+        "password",
+        "otp",
+        "verify",
+        "blocked"
+      ];
+
+      const urgencyTerms = [
+        "urgent",
+        "call now",
+        "instant"
+      ];
+
+      const financialTerms = [
+        "cash",
+        "money",
+        "lakh",
+        "withdraw",
+        "reward",
+        "bonus",
+        "prize",
+        "lottery",
+        "win",
+        "winner",
+        "earn"
+      ];
+
+      const actionTerms = [
+        "click",
+        "download",
+        "grab now"
+      ];
+
+
+      const hasBankingTerms =
+        matchedLower.some(k =>
+          bankingTerms.includes(k)
+        );
+
+      const hasUrgencyTerms =
+        matchedLower.some(k =>
+          urgencyTerms.includes(k)
+        );
+
+      const hasFinancialTerms =
+        matchedLower.some(k =>
+          financialTerms.includes(k)
+        );
+
+      const hasActionTerms =
+        matchedLower.some(k =>
+          actionTerms.includes(k)
+        );
+
+
+      if (hasBankingTerms && hasUrgencyTerms) {
+
+        explanation =
+          "This message is marked as SPAM because it contains banking or account-related terms combined with urgent language. Such messages commonly attempt to pressure users into revealing sensitive information.";
+
+      }
+
+      else if (hasBankingTerms && hasActionTerms) {
+
+        explanation =
+          "This message is marked as SPAM because it contains banking or verification-related terms along with actions such as clicking or downloading. These patterns are commonly associated with phishing attempts.";
+
+      }
+
+      else if (hasFinancialTerms && hasUrgencyTerms) {
+
+        explanation =
+          "This message is marked as SPAM because it combines financial or reward-related claims with urgent language. Such messages may attempt to trick users into responding or providing personal information.";
+
+      }
+
+      else if (hasActionTerms) {
+
+        explanation =
+          "This message is marked as SPAM because it contains suspicious action-based language such as clicking or downloading. These instructions can be used to redirect users to malicious or fraudulent content.";
+
+      }
+
+      else if (hasFinancialTerms) {
+
+        explanation =
+          "This message is marked as SPAM because it contains financial, reward, lottery, or money-related terms that are frequently used in fraudulent promotional messages.";
+
+      }
+
+      else {
+
+        explanation =
+          "This message is marked as SPAM because it contains suspicious keywords commonly associated with smishing and fraudulent SMS messages.";
+
+      }
+
+    }
+
+    else {
+
+      explanation =
+        "This message appears to be legitimate because no commonly associated smishing or suspicious keywords were detected.";
+
+    }
+
+
+    return {
+
+      label: score > 0.5 ? 'spam' : 'ham',
+
+      score: score,
+
+      explanation: explanation
+
+    };
+
+  }
+
+
+  /* ================================
+     Display Result
+  ================================= */
+
+  function displayResult(data, boxId = 'resultBox') {
+
+    const resultBox = document.getElementById(boxId);
+
+    resultBox.style.display = 'block';
+
+
+    const label =
+      data.label ||
+      (data.score > 0.5 ? 'spam' : 'ham');
+
+
+    const score =
+      Math.round((data.score || 0) * 100) / 100;
+
+
+    const cls =
+      label === 'spam'
+        ? 'label-spam'
+        : 'label-ham';
+
+
+    resultBox.innerHTML = `
+
+      <div>
+        Prediction:
+        <span class="${cls}">
+          ${label.toUpperCase()}
+        </span>
+        (score: ${score})
+      </div>
+
+      <div class="muted">
+        Explanation:
+        ${data.explanation || 'N/A'}
+      </div>
+
+    `;
+
+  }
+
+
+  /* ================================
+     Text SMS Events
+  ================================= */
+
+  const smsInput =
+    document.getElementById('sms');
+
+
+  document
+    .getElementById('checkBtn')
+    .addEventListener('click', () => {
+
+      const msg =
+        smsInput.value.trim();
+
+
+      if (!msg) {
+
+        alert('Please paste an SMS message.');
+
+        return;
+
+      }
+
+
+      const data =
+        keywordBasedCheck(msg);
+
+
+      displayResult(data);
+
+    });
+
+
+  document
+    .getElementById('clearBtn')
+    .addEventListener('click', () => {
+
+      smsInput.value = '';
+
+      document
+        .getElementById('resultBox')
+        .style.display = 'none';
+
+    });
+
+
+  /* ================================
+     Screenshot OCR Events
+  ================================= */
+
+  const imgUpload =
+    document.getElementById('imgUpload');
+
+  const ocrBtn =
+    document.getElementById('ocrBtn');
+
+  const ocrStatus =
+    document.getElementById('ocrStatus');
+
+
+  ocrBtn.addEventListener(
+    'click',
+    async () => {
+
+      const file =
+        imgUpload.files[0];
+
+
+      if (!file) {
+
+        ocrStatus.innerText =
+          'Please upload an image.';
+
+        return;
+
+      }
+
+
+      ocrStatus.innerText =
+        'Extracting text...';
+
+
+      document
+        .getElementById('resultBoxImg')
+        .style.display = 'none';
+
+
+      try {
+
+        const {
+          data: { text }
+        } = await Tesseract.recognize(
+          file,
+          'eng'
+        );
+
+
+        if (!text.trim()) {
+
+          ocrStatus.innerText =
+            'No text found in image.';
+
+          return;
+
+        }
+
+
+        const data =
+          keywordBasedCheck(text);
+
+
+        displayResult(
+          data,
+          'resultBoxImg'
+        );
+
+
+        ocrStatus.innerText =
+          'Text extracted and checked.';
+
+      }
+
+      catch (err) {
+
+        ocrStatus.innerText =
+          'OCR failed: ' + err.message;
+
+      }
+
+    }
+  );
+
+
+  /* ================================
+     CSV Batch Events
+  ================================= */
+
+  const fileInput =
+    document.getElementById('file');
+
+  const uploadStatus =
+    document.getElementById('uploadStatus');
+
+
+  document
+    .getElementById('uploadBtn')
+    .addEventListener(
+      'click',
+      () => {
+
+        const f =
+          fileInput.files[0];
+
+
+        if (!f) {
+
+          uploadStatus.innerText =
+            'Choose a CSV file first.';
+
+          return;
+
+        }
+
+
+        uploadStatus.innerText =
+          'Processing...';
+
+
+        const fr =
+          new FileReader();
+
+
+        fr.onload = async (e) => {
+
+          const text =
+            e.target.result;
+
+
+          const rows =
+            text
+              .split(/\r?\n/)
+              .map(r => r.trim())
+              .filter(r => r.length);
+
+
+          if (!rows.length) {
+
+            uploadStatus.innerText =
+              'CSV is empty';
+
+            return;
+
+          }
+
+
+          const headers =
+            rows[0].split(',');
+
+
+          const msgIdx =
+            headers.findIndex(
+              h =>
+                h.toLowerCase()
+                 .includes('message')
+            );
+
+
+          if (msgIdx === -1) {
+
+            uploadStatus.innerText =
+              'CSV must contain "message" column.';
+
+            return;
+
+          }
+
+
+          const payload =
+            rows
+              .slice(1)
+              .map(r => ({
+                message:
+                  r.split(',')[msgIdx] || ''
+              }));
+
+
+          try {
+
+            const results =
+              payload.map(
+                p => keywordBasedCheck(
+                  p.message
+                )
+              );
+
+
+            uploadStatus.innerText =
+              `Processed ${results.length} messages. Check console for details.`;
+
+
+            console.log(results);
+
+          }
+
+          catch (err) {
+
+            uploadStatus.innerText =
+              'Error: ' + err.message;
+
+          }
+
+        };
+
+
+        fr.readAsText(f);
+
+      }
+    );
+
+</script>
+
+</body>
+</html>
